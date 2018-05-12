@@ -8,57 +8,76 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class MainActivity extends AppCompatActivity {
 
-    private Button uruchom;
-    private TextView mCzasDzialaniaEtykieta;
+    private Button pobierzInfo;
+    private TextView adres;
+    private TextView rozmiarPliku;
+    private TextView typPliku;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mCzasDzialaniaEtykieta =
-                (TextView) findViewById(R.id.czas_dzialania_etykieta);
-        uruchom = (Button) findViewById(R.id.uruchom);
-        uruchom.setOnClickListener(new View.OnClickListener() {
+        adres =
+                (TextView) findViewById(R.id.adres);
+        pobierzInfo = (Button) findViewById(R.id.pobierz_info);
+        pobierzInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                uruchomZadanieAcynchroniczne();
+                informacjeOPliku();
             }
         });
     }
-    private void uruchomZadanieAcynchroniczne() {
+    private void informacjeOPliku(){
         ZadanieAsynchroniczne zadanie=new ZadanieAsynchroniczne();
-        zadanie.execute(new Integer[] {10});
-        Log.d("async_task", "zadanie uruchomione");
+        zadanie.execute(new String[] {adres.getText().toString()});
+        Log.d("PI", "zadanie uruchomione");
     }
-    class ZadanieAsynchroniczne extends AsyncTask<Integer,Integer,Integer> {
-        @Override
-        protected Integer doInBackground(Integer... params) {
+    class ZadanieAsynchroniczne extends AsyncTask<String,Void,String[]> {
 
-          
+        int mRozmiar;
+        String mTyp;
+
+        @Override
+        protected String[] doInBackground(String... params) {
+            Log.d("PI","uruchomione");
+            String[] plikInfo = new String[2];
+            rozmiarPliku = findViewById(R.id.rozmiar);
+            typPliku = findViewById(R.id.typ);
+            HttpURLConnection polaczenie = null;
+            try {
+                URL url = new URL(params[0]);
+                Log.d("PI","URL "+url.toString());
+                polaczenie = (HttpURLConnection) url.openConnection();
+                polaczenie.setRequestMethod("GET");
+                polaczenie.setDoOutput(true);
+                plikInfo[0]=new Integer(polaczenie.getContentLength()).toString();
+                plikInfo[1]=polaczenie.getContentType();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (polaczenie != null) polaczenie.disconnect();
+                Log.d("PI", "rozłączone");
+            }
+            return plikInfo;
         }
 
-
-        // opcjonalna, wywoływana w wątku GUI
-        // aktualizuje informacje o postępie
         @Override
-        protected void onProgressUpdate(Integer... values) {
-            Log.d("async_task",
-                    "aktualizacja postępu: " + values[0].intValue());
-            mCzasDzialaniaEtykieta.setText(
-                    Integer.toString(values[0].intValue()));
-            super.onProgressUpdate(values);
+        protected void onProgressUpdate(Void... values) {
+
         }
 
-        // opcjonalna, wywoływana w wątku GUI
-        // odpowiedzialna za publikację wyników
         @Override
-        protected void onPostExecute(Integer result) {
-            Log.d("async_task", "wynik: " + result.intValue());
-            TextView wynikEtykieta =
-                    (TextView) findViewById(R.id.wynik_etykieta);
-            wynikEtykieta.setText("wynik: " + result.intValue());
+        protected void onPostExecute(String[] result) {
+            Log.d("PI", "zakonczone");
+            rozmiarPliku = findViewById(R.id.rozmiar);
+            typPliku = findViewById(R.id.typ);
+            rozmiarPliku.setText(result[0]);
+            typPliku.setText(result[1]);
             super.onPostExecute(result);
         }
     }
