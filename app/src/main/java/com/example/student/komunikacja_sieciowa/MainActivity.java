@@ -1,6 +1,9 @@
 package com.example.student.komunikacja_sieciowa;
 
+import android.app.IntentService;
+import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,6 +17,7 @@ import java.net.URL;
 public class MainActivity extends AppCompatActivity {
 
     private Button pobierzInfo;
+    private Button pobierzPlik;
     private TextView adres;
     private TextView rozmiarPliku;
     private TextView typPliku;
@@ -25,38 +29,49 @@ public class MainActivity extends AppCompatActivity {
         adres =
                 (TextView) findViewById(R.id.adres);
         pobierzInfo = (Button) findViewById(R.id.pobierz_info);
+        pobierzPlik = (Button) findViewById(R.id.pobierz_plik);
         pobierzInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 informacjeOPliku();
             }
         });
+        pobierzPlik.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UslugaPobieranie.uruchomPobieranie(MainActivity.this,adres.getText().toString());
+            }
+        });
     }
-    private void informacjeOPliku(){
-        ZadanieAsynchroniczne zadanie=new ZadanieAsynchroniczne();
-        zadanie.execute(new String[] {adres.getText().toString()});
+
+    private void informacjeOPliku() {
+        ZadanieAsynchroniczne zadanie = new ZadanieAsynchroniczne();
+        zadanie.execute(new String[]{adres.getText().toString()});
         Log.d("PI", "zadanie uruchomione");
     }
-    class ZadanieAsynchroniczne extends AsyncTask<String,Void,String[]> {
+
+
+
+    class ZadanieAsynchroniczne extends AsyncTask<String, Void, String[]> {
 
         int mRozmiar;
         String mTyp;
 
         @Override
         protected String[] doInBackground(String... params) {
-            Log.d("PI","uruchomione");
+            Log.d("PI", "uruchomione");
             String[] plikInfo = new String[2];
             rozmiarPliku = findViewById(R.id.rozmiar);
             typPliku = findViewById(R.id.typ);
             HttpURLConnection polaczenie = null;
             try {
                 URL url = new URL(params[0]);
-                Log.d("PI","URL "+url.toString());
+                Log.d("PI", "URL " + url.toString());
                 polaczenie = (HttpURLConnection) url.openConnection();
                 polaczenie.setRequestMethod("GET");
                 polaczenie.setDoOutput(true);
-                plikInfo[0]=new Integer(polaczenie.getContentLength()).toString();
-                plikInfo[1]=polaczenie.getContentType();
+                plikInfo[0] = new Integer(polaczenie.getContentLength()).toString();
+                plikInfo[1] = polaczenie.getContentType();
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
