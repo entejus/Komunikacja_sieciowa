@@ -2,7 +2,10 @@ package com.example.student.komunikacja_sieciowa;
 
 import android.Manifest;
 import android.app.IntentService;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
@@ -12,6 +15,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +30,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView adres;
     private TextView rozmiarPliku;
     private TextView typPliku;
+    private TextView pobranoBajtow;
+    private ProgressBar pasekPostepu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +89,45 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
         }
+    }
+
+    private BroadcastReceiver mOdbiorcaRozgloszen = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null) {
+                Bundle bundle = intent.getExtras();
+                PostepInfo postep = bundle.getParcelable(UslugaPobieranie.INFO_O_POBIERANIU);
+                Log.d("intent_service", "odbiorca odebral komunikat: ");
+                aktualizujPostep(postep);
+            }
+        }
+    };
+
+    protected void aktualizujPostep(PostepInfo postep) {
+        Log.d("Post:", "aktualizuj ");
+        int pobrano = postep.mPobranychBajtow;
+        int rozmiar = postep.mRozmiar;
+        int wynik = postep.mWynik;
+        pobranoBajtow = (TextView) findViewById(R.id.liczbaBajtow);
+        pasekPostepu = (ProgressBar) findViewById(R.id.pasekPostepu);
+        pasekPostepu.setMax(rozmiar);
+        pasekPostepu.setProgress(pobrano);
+        Log.d("PB", pasekPostepu.getMax() + " " + pasekPostepu.getProgress() + " " + pobrano);
+        pobranoBajtow.setText(Integer.toString(pobrano));
+
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mOdbiorcaRozgloszen, new IntentFilter(UslugaPobieranie.POWIADOMIENIE));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mOdbiorcaRozgloszen);
     }
 
     class ZadanieAsynchroniczne extends AsyncTask<String, Void, String[]> {
