@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:stretchColumns="1">
 
     <TableRow
@@ -11,12 +11,16 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Adres:" />
+            android:text="Adres:"
+            />
 
         <EditText
             android:id="@+id/adres"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxWidth="1in"
+            />
+
 
     </TableRow>
 
@@ -87,7 +91,7 @@
             android:id="@+id/liczbaBajtow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0"/>
+            android:text="0" />
     </TableRow>
 
     <TableRow
@@ -99,7 +103,7 @@
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1" />
 
     </TableRow>
 

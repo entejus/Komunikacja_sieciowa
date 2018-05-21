@@ -104,16 +104,25 @@ public class MainActivity extends AppCompatActivity {
     };
 
     protected void aktualizujPostep(PostepInfo postep) {
-        Log.d("Post:", "aktualizuj ");
+        Log.d("aktualizujPostep", "aktualizacja postępu");
         int pobrano = postep.mPobranychBajtow;
         int rozmiar = postep.mRozmiar;
         int wynik = postep.mWynik;
         pobranoBajtow = (TextView) findViewById(R.id.liczbaBajtow);
         pasekPostepu = (ProgressBar) findViewById(R.id.pasekPostepu);
-        pasekPostepu.setMax(rozmiar);
-        pasekPostepu.setProgress(pobrano);
-        Log.d("PB", pasekPostepu.getMax() + " " + pasekPostepu.getProgress() + " " + pobrano);
-        pobranoBajtow.setText(Integer.toString(pobrano));
+        switch (wynik){
+            case -1:
+                Toast.makeText(this, "Wystąpił błąd podczas pobierania", Toast.LENGTH_SHORT).show();
+                break;
+            case 0:
+                pasekPostepu.setMax(rozmiar);
+                pasekPostepu.setProgress(pobrano);
+                pobranoBajtow.setText(Integer.toString(pobrano));
+                break;
+            case 1:
+                Toast.makeText(this, "Ukończono pobieranie pliku", Toast.LENGTH_SHORT).show();
+                break;
+        }
 
 
     }
@@ -132,19 +141,15 @@ public class MainActivity extends AppCompatActivity {
 
     class ZadanieAsynchroniczne extends AsyncTask<String, Void, String[]> {
 
-        int mRozmiar;
-        String mTyp;
 
         @Override
         protected String[] doInBackground(String... params) {
-            Log.d("PI", "uruchomione");
+            Log.d("ZadanieAsynchroniczne", "uruchomione");
             String[] plikInfo = new String[2];
-            rozmiarPliku = findViewById(R.id.rozmiar);
-            typPliku = findViewById(R.id.typ);
             HttpURLConnection polaczenie = null;
             try {
                 URL url = new URL(params[0]);
-                Log.d("PI", "URL " + url.toString());
+                Log.d("ZadanieAsynchroniczne", "URL " + url.toString());
                 polaczenie = (HttpURLConnection) url.openConnection();
                 polaczenie.setRequestMethod("GET");
                 polaczenie.setDoOutput(true);
@@ -154,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             } finally {
                 if (polaczenie != null) polaczenie.disconnect();
-                Log.d("PI", "rozłączone");
+                Log.d("ZadanieAsynchroniczne", "Połączenie rozłączone");
             }
             return plikInfo;
         }
@@ -166,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String[] result) {
-            Log.d("PI", "zakonczone");
+            Log.d("ZadanieAsynchroniczne", "onPostExecute");
             rozmiarPliku = findViewById(R.id.rozmiar);
             typPliku = findViewById(R.id.typ);
             rozmiarPliku.setText(result[0]);

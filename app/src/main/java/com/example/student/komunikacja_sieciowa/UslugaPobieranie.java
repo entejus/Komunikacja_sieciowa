@@ -22,7 +22,6 @@ import java.net.URL;
 public class UslugaPobieranie extends IntentService {
     private static final String AKCJA_POBIERANIE = "com.example.student.komunikacja_sieciowa.action.pobieranie";
     private static final String ADRES = "com.example.student.komunikacja_sieciowa.extra.adres";
-    private int rozmiar;
 
 
     public UslugaPobieranie() {
@@ -43,8 +42,8 @@ public class UslugaPobieranie extends IntentService {
             final String action = intent.getAction();
             if (AKCJA_POBIERANIE.equals(action)) {
                 final String adres = intent.getStringExtra(ADRES);
-                pobieranie(adres);
                 Log.d("Usługa pobierania", "Rozpoczęcie akcji");
+                pobieranie(adres);
             } else {
                 Log.e("Usluga pobierania", "nieznana akcja");
             }
@@ -57,11 +56,12 @@ public class UslugaPobieranie extends IntentService {
 
         HttpURLConnection polaczenie = null;
         FileOutputStream strumienDoPliku = null;
-        int pobranoBajtow=0;
-        //przygotujPowiadomienie();
+        int pobranoBajtow = 0;
+        int rozmiar = 0;
         try {
             URL url = new URL(adres);
             polaczenie = (HttpURLConnection) url.openConnection();
+            Log.d("pobieranie()", "Ustanowienie polaczenia");
             polaczenie.connect();
             File plikRoboczy = new File(url.getFile());
             File plikWyjsciowy = new File(
@@ -72,24 +72,27 @@ public class UslugaPobieranie extends IntentService {
             rozmiar = polaczenie.getContentLength();
             strumienDoPliku = new FileOutputStream(plikWyjsciowy.getPath());
             DataInputStream czytnik = new DataInputStream(polaczenie.getInputStream());
-            Log.d("P","Pobieraanie");
+
+            Log.d("pobieranie()", "Pobieranie");
             byte[] bufor = new byte[1024];
             int pobrano = czytnik.read(bufor, 0, 1024);
             while (pobrano != -1) {
                 strumienDoPliku.write(bufor, 0, pobrano);
                 pobranoBajtow += pobrano;
-                Log.d("P;","Pobrano:"+pobrano+" "+pobranoBajtow);
-                wyslijBroadcast(pobranoBajtow, 1);
+                Log.d("pobieranie()", "Pobrano:" + pobranoBajtow);
+                wyslijBroadcast(rozmiar, pobranoBajtow, 0);
                 pobrano = czytnik.read(bufor, 0, 1024);
             }
-            Log.d("P","Pobrano");
-      //      aktualizujPowiadomienie();
+            wyslijBroadcast(rozmiar, pobranoBajtow, 1);
+            Log.d("pobieranie()", "Pobrano");
             strumienDoPliku.close();
+            czytnik.close();
 
         } catch (Exception e) {
+            wyslijBroadcast(rozmiar, pobranoBajtow, -1);
             e.printStackTrace();
         } finally {
-            polaczenie.disconnect();
+            if (polaczenie != null) polaczenie.disconnect();
         }
 
     }
@@ -97,60 +100,15 @@ public class UslugaPobieranie extends IntentService {
     public final static String POWIADOMIENIE = "com.example.student.komunikacja_sieciowa.odbiornik";
     public final static String INFO_O_POBIERANIU = "info o pobieraniu";
 
-    private void wyslijBroadcast(int pobrano, int wynik) {
+    private void wyslijBroadcast(int rozmiar, int pobrano, int wynik) {
+
+        Log.d("Broadcast", "wysłanie powiadomienia");
         PostepInfo postep = new PostepInfo();
         postep.mWynik = wynik;
         postep.mRozmiar = rozmiar;
         postep.mPobranychBajtow = pobrano;
-        Log.d("Broad: ",pobrano+" "+wynik+" "+rozmiar);
-        Log.d("Broad parcel:" , postep.mPobranychBajtow+" "+postep.mWynik+" "+postep.mRozmiar);
         Intent zamiar = new Intent(POWIADOMIENIE);
         zamiar.putExtra(INFO_O_POBIERANIU, postep);
         sendBroadcast(zamiar);
     }
-
-//    NotificationManager menedzerPowiadomien;
-//    int idPowiadomienia;
-//    Notification.Builder budowniczyPowiadomien;
-//    Intent zamiarPowiadomienia;
-//
-//    void przygotujPowiadomienie() {
-//        Log.d("MP", "przygotujPowiadomienie()");
-//
-//        zamiarPowiadomienia = new Intent(this, MainActivity.class);
-//
-//        TaskStackBuilder budowniczyStosu = TaskStackBuilder.create(this);
-//        budowniczyStosu.addParentStack(MainActivity.class);
-//        budowniczyStosu.addNextIntent(zamiarPowiadomienia);
-//
-//        PendingIntent zamiarOczekujacy = budowniczyStosu.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//        menedzerPowiadomien = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-//        idPowiadomienia = 1;
-//        budowniczyPowiadomien = new Notification.Builder(this);
-//        budowniczyPowiadomien.setContentTitle("Tytuł powiadomienia")
-//                .setContentIntent(zamiarOczekujacy)
-//                .setSubText("pobieranie")
-//                .setSmallIcon(R.drawable.ic_launcher_foreground)
-//                .setOngoing(true);
-//
-//        menedzerPowiadomien.notify(idPowiadomienia, budowniczyPowiadomien.build());
-//    }
-//
-//    void aktualizujPowiadomienie() {
-//        Log.d("MP", "aktualizujPowiadomienie()");
-//        TaskStackBuilder budowniczyStosu = TaskStackBuilder.create(this);
-//        budowniczyStosu.addParentStack(MainActivity.class);
-//        budowniczyStosu.addNextIntent(zamiarPowiadomienia);
-//
-//        PendingIntent zamiarOczekujacy = budowniczyStosu.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//        budowniczyPowiadomien.setOngoing(false) // już nie trwa
-//                // po kliknięciu automatycznie się usunie z paska
-//                .setAutoCancel(true)
-//                .setContentIntent(zamiarOczekujacy);
-//
-//        budowniczyPowiadomien.setSubText("Pobrano");
-//        menedzerPowiadomien.notify(idPowiadomienia, budowniczyPowiadomien.build());
-//    }
 }
